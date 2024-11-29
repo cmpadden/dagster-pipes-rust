@@ -1,9 +1,9 @@
 use serde_json::{from_str, from_value, Map, Value};
 
-use crate::PipesContextData;
+use crate::{PipesContextData, Result};
 
 pub trait PipesContextLoader {
-    fn load_context(&self, params: Map<String, Value>) -> PipesContextData;
+    fn load_context(&self, params: Map<String, Value>) -> Result<PipesContextData>;
 }
 
 /// Context loader that loads context data from either a file or directly from the provided params.
@@ -23,17 +23,14 @@ impl PipesDefaultContextLoader {
 }
 
 impl PipesContextLoader for PipesDefaultContextLoader {
-    fn load_context(&self, params: Map<String, Value>) -> PipesContextData {
-        // TODO: Have this function return a `Result<PipesContextData>` instead
+    fn load_context(&self, params: Map<String, Value>) -> Result<PipesContextData> {
         const FILE_PATH_KEY: &str = "path";
         const DIRECT_KEY: &str = "data";
 
         match (params.get(FILE_PATH_KEY), params.get(DIRECT_KEY)) {
             // `_` in second-half of tuple to account for the case where both keys are specified
-            (Some(Value::String(path)), _) => {
-                from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
-            }
-            (None, Some(Value::Object(map))) => from_value(Value::Object(map.clone())).unwrap(),
+            (Some(Value::String(path)), _) => from_str(&std::fs::read_to_string(path)?)?,
+            (None, Some(Value::Object(map))) => from_value(Value::Object(map.clone()))?,
             _ => {
                 panic!(
                     "Invalid params, expected key \"{}\" or \"{}\", received {:?}",

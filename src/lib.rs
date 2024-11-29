@@ -118,7 +118,7 @@ struct PipesMessagesParams {
 
 // partial translation of
 // https://github.com/dagster-io/dagster/blob/258d9ca0db/python_modules/dagster-pipes/dagster_pipes/__init__.py#L798-L838
-pub fn open_dagster_pipes() -> PipesContext {
+pub fn open_dagster_pipes() -> Result<PipesContext> {
     let params_loader = PipesEnvVarParamsLoader::new();
     let context_loader = PipesDefaultContextLoader::new();
 
@@ -131,8 +131,8 @@ pub fn open_dagster_pipes() -> PipesContext {
     //    panic!("only stderr supported for dagster pipes messages")
     //}
 
-    PipesContext {
-        data: context_loader.load_context(context_params),
+    Ok(PipesContext {
+        data: context_loader.load_context(context_params)?,
         writer: PipesFileMessageWriter { path },
-    }
+    })
 }

@@ -14,4 +14,5 @@ fn main() {
         AssetCheckSeverity::Warn,
         json!({"quality": {"raw_value": 5, "type": "int"}}),
     );
+    Ok(())
 }

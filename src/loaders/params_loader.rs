@@ -7,6 +7,8 @@ use std::io::Read;
 const DAGSTER_PIPES_CONTEXT_ENV_VAR: &str = "DAGSTER_PIPES_CONTEXT";
 const DAGSTER_PIPES_MESSAGES_ENV_VAR: &str = "DAGSTER_PIPES_MESSAGES";
 
+use super::LoadErrorKind;
+
 /// Load params passed from the orchestration process by the context injector and
 /// message reader. These params are used to respectively bootstrap the
 /// [`PipesContextLoader`] and [`PipesMessageWriter`].
@@ -15,9 +17,9 @@ pub trait PipesParamsLoader {
     /// to create a PipesContext or should instead return a mock.
     fn is_dagster_pipes_process(&self) -> bool;
     /// Load params passed by the orchestration-side context injector.
-    fn load_context_params(&self) -> Map<String, Value>;
+    fn load_context_params(&self) -> Result<Map<String, Value>, LoadErrorKind>;
     /// Load params passed by the orchestration-side message reader.
-    fn load_message_params(&self) -> Map<String, Value>;
+    fn load_message_params(&self) -> Result<Map<String, Value>, LoadErrorKind>;
 }
 
 #[derive(Debug, Default)]
@@ -34,13 +36,13 @@ impl PipesParamsLoader for PipesEnvVarParamsLoader {
         std::env::var(DAGSTER_PIPES_CONTEXT_ENV_VAR).is_ok()
     }
 
-    fn load_context_params(&self) -> Map<String, Value> {
-        let param = std::env::var(DAGSTER_PIPES_CONTEXT_ENV_VAR).unwrap();
+    fn load_context_params(&self) -> Result<Map<String, Value>, LoadErrorKind> {
+        let param = std::env::var(DAGSTER_PIPES_CONTEXT_ENV_VAR)?;
         decode_env_var(&param)
     }
 
-    fn load_message_params(&self) -> Map<String, Value> {
-        let param = std::env::var(DAGSTER_PIPES_MESSAGES_ENV_VAR).unwrap();
+    fn load_message_params(&self) -> Result<Map<String, Value>, LoadErrorKind> {
+        let param = std::env::var(DAGSTER_PIPES_MESSAGES_ENV_VAR)?;
         decode_env_var(&param)
     }
 }

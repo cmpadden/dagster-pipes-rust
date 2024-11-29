@@ -116,15 +116,34 @@ struct PipesMessagesParams {
     stdio: Option<String>, // stderr | stdout (unsupported)
 }
 
+#[derive(Debug, Error)]
+#[error("Dagster Pipes failure")]
+#[non_exhaustive]
+pub struct DagsterPipesError(#[from] pub DagsterPipesErrorKind);
+
+#[derive(Debug, Error)]
+#[error(transparent)]
+#[non_exhaustive]
+pub enum DagsterPipesErrorKind {
+    Load(#[from] LoadErrorKind),
+}
+
 // partial translation of
 // https://github.com/dagster-io/dagster/blob/258d9ca0db/python_modules/dagster-pipes/dagster_pipes/__init__.py#L798-L838
-pub fn open_dagster_pipes() -> Result<PipesContext> {
+pub fn open_dagster_pipes() -> Result<PipesContext, DagsterPipesError> {
     let params_loader = PipesEnvVarParamsLoader::new();
     let context_loader = PipesDefaultContextLoader::new();
 
-    let context_params = params_loader.load_context_params();
-    let message_params = params_loader.load_message_params();
+    let context_params = params_loader
+        .load_context_params()
+        .map_err(|source| DagsterPipesError(DagsterPipesErrorKind::Load(source)))?;
+    let context_data = context_loader
+        .load_context(context_params)
+        .map_err(|source| DagsterPipesError(DagsterPipesErrorKind::Load(source)))?;
 
+    let message_params = params_loader
+        .load_message_params()
+        .map_err(|source| DagsterPipesError(DagsterPipesErrorKind::Load(source)))?;
     let path = "path".to_string(); // Placeholder variable until MessageWriter is implemented
 
     //if stdio != "stderr" {
@@ -132,7 +151,7 @@ pub fn open_dagster_pipes() -> Result<PipesContext> {
     //}
 
     Ok(PipesContext {
-        data: context_loader.load_context(context_params)?,
+        data: context_data,
         writer: PipesFileMessageWriter { path },
     })
 }

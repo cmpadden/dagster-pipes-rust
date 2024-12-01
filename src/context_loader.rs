@@ -1,11 +1,15 @@
+use std::ffi::OsString;
+
 use serde_json::{from_str, from_value, Map, Value};
+use thiserror::Error;
 
 use crate::PipesContextData;
 
-use super::LoadErrorKind;
-
 pub trait PipesContextLoader {
-    fn load_context(&self, params: Map<String, Value>) -> Result<PipesContextData, LoadErrorKind>;
+    fn load_context(
+        &self,
+        params: Map<String, Value>,
+    ) -> Result<PipesContextData, PayloadErrorKind>;
 }
 
 /// Context loader that loads context data from either a file or directly from the provided params.
@@ -24,15 +28,41 @@ impl PipesDefaultContextLoader {
     }
 }
 
+#[derive(Debug, Error)]
+#[non_exhaustive]
+pub enum PayloadErrorKind {
+    #[error("io error for path {:?}: {}", .path, .source)]
+    #[non_exhaustive]
+    IO {
+        path: OsString,
+        source: std::io::Error,
+    },
+
+    #[error(transparent)]
+    #[non_exhaustive]
+    Invalid(#[from] serde_json::Error),
+
+    #[error("no payload found in params")]
+    #[non_exhaustive]
+    Missing,
+}
+
 impl PipesContextLoader for PipesDefaultContextLoader {
-    fn load_context(&self, params: Map<String, Value>) -> Result<PipesContextData, LoadErrorKind> {
+    fn load_context(
+        &self,
+        params: Map<String, Value>,
+    ) -> Result<PipesContextData, PayloadErrorKind> {
         const FILE_PATH_KEY: &str = "path";
         const DIRECT_KEY: &str = "data";
 
         match (params.get(FILE_PATH_KEY), params.get(DIRECT_KEY)) {
             // `_` in second-half of tuple to account for the case where both keys are specified
             (Some(Value::String(path)), _) => {
-                let raw_data = std::fs::read_to_string(path)?;
+                let raw_data =
+                    std::fs::read_to_string(path).map_err(|source| PayloadErrorKind::IO {
+                        path: path.into(),
+                        source,
+                    })?;
                 let context_data = from_str(&raw_data)?;
                 Ok(context_data)
             }
@@ -40,12 +70,7 @@ impl PipesContextLoader for PipesDefaultContextLoader {
                 let context_data = from_value(Value::Object(map.clone()))?;
                 Ok(context_data)
             }
-            _ => {
-                panic!(
-                    "Invalid params, expected key \"{}\" or \"{}\", received {:?}",
-                    FILE_PATH_KEY, DIRECT_KEY, params
-                )
-            }
+            _ => Err(PayloadErrorKind::Missing),
         }
     }
 }

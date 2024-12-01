@@ -5,8 +5,11 @@ use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Write;
 
+use context_loader::PayloadErrorKind;
+use params_loader::ParamsError;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use thiserror::Error;
 
 use crate::context_loader::PipesContextLoader;
 use crate::context_loader::PipesDefaultContextLoader;
@@ -117,7 +120,7 @@ struct PipesMessagesParams {
 }
 
 #[derive(Debug, Error)]
-#[error("Dagster Pipes failure")]
+#[error("dagster pipes failure:\n{0}")]
 #[non_exhaustive]
 pub struct DagsterPipesError(#[from] pub DagsterPipesErrorKind);
 
@@ -125,7 +128,25 @@ pub struct DagsterPipesError(#[from] pub DagsterPipesErrorKind);
 #[error(transparent)]
 #[non_exhaustive]
 pub enum DagsterPipesErrorKind {
-    Load(#[from] LoadErrorKind),
+    #[error("failed to load params:\n{0}")]
+    #[non_exhaustive]
+    ParamsLoader(#[from] ParamsError),
+
+    #[error("failed to load context:\n{0}")]
+    #[non_exhaustive]
+    ContextLoader(#[from] PayloadErrorKind),
+}
+
+impl From<ParamsError> for DagsterPipesError {
+    fn from(value: ParamsError) -> Self {
+        DagsterPipesError(DagsterPipesErrorKind::ParamsLoader(value))
+    }
+}
+
+impl From<PayloadErrorKind> for DagsterPipesError {
+    fn from(value: PayloadErrorKind) -> Self {
+        DagsterPipesError(DagsterPipesErrorKind::ContextLoader(value))
+    }
 }
 
 // partial translation of
@@ -134,16 +155,10 @@ pub fn open_dagster_pipes() -> Result<PipesContext, DagsterPipesError> {
     let params_loader = PipesEnvVarParamsLoader::new();
     let context_loader = PipesDefaultContextLoader::new();
 
-    let context_params = params_loader
-        .load_context_params()
-        .map_err(|source| DagsterPipesError(DagsterPipesErrorKind::Load(source)))?;
-    let context_data = context_loader
-        .load_context(context_params)
-        .map_err(|source| DagsterPipesError(DagsterPipesErrorKind::Load(source)))?;
+    let context_params = params_loader.load_context_params()?;
+    let context_data = context_loader.load_context(context_params)?;
 
-    let message_params = params_loader
-        .load_message_params()
-        .map_err(|source| DagsterPipesError(DagsterPipesErrorKind::Load(source)))?;
+    let message_params = params_loader.load_message_params()?;
     let path = "path".to_string(); // Placeholder variable until MessageWriter is implemented
 
     //if stdio != "stderr" {

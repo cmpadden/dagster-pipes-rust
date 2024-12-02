@@ -6,5 +6,3 @@ edition = "2021"
 [dependencies]
 dagster_pipes_rust = { path = "../.." }
 serde_json = "1.0.133"
-
-

@@ -1,9 +1,15 @@
+use std::ffi::OsString;
+
 use serde_json::{from_str, from_value, Map, Value};
+use thiserror::Error;
 
 use crate::PipesContextData;
 
 pub trait PipesContextLoader {
-    fn load_context(&self, params: Map<String, Value>) -> PipesContextData;
+    fn load_context(
+        &self,
+        params: Map<String, Value>,
+    ) -> Result<PipesContextData, PayloadErrorKind>;
 }
 
 /// Context loader that loads context data from either a file or directly from the provided params.
@@ -22,24 +28,49 @@ impl PipesDefaultContextLoader {
     }
 }
 
+#[derive(Debug, Error)]
+#[non_exhaustive]
+pub enum PayloadErrorKind {
+    #[error("io error for path {:?}: {}", .path, .source)]
+    #[non_exhaustive]
+    IO {
+        path: OsString,
+        source: std::io::Error,
+    },
+
+    #[error(transparent)]
+    #[non_exhaustive]
+    Invalid(#[from] serde_json::Error),
+
+    #[error("no payload found in params")]
+    #[non_exhaustive]
+    Missing,
+}
+
 impl PipesContextLoader for PipesDefaultContextLoader {
-    fn load_context(&self, params: Map<String, Value>) -> PipesContextData {
-        // TODO: Have this function return a `Result<PipesContextData>` instead
+    fn load_context(
+        &self,
+        params: Map<String, Value>,
+    ) -> Result<PipesContextData, PayloadErrorKind> {
         const FILE_PATH_KEY: &str = "path";
         const DIRECT_KEY: &str = "data";
 
         match (params.get(FILE_PATH_KEY), params.get(DIRECT_KEY)) {
             // `_` in second-half of tuple to account for the case where both keys are specified
             (Some(Value::String(path)), _) => {
-                from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
+                let raw_data =
+                    std::fs::read_to_string(path).map_err(|source| PayloadErrorKind::IO {
+                        path: path.into(),
+                        source,
+                    })?;
+                let context_data = from_str(&raw_data)?;
+                Ok(context_data)
             }
-            (None, Some(Value::Object(map))) => from_value(Value::Object(map.clone())).unwrap(),
-            _ => {
-                panic!(
-                    "Invalid params, expected key \"{}\" or \"{}\", received {:?}",
-                    FILE_PATH_KEY, DIRECT_KEY, params
-                )
+            (None, Some(Value::Object(map))) => {
+                let context_data = from_value(Value::Object(map.clone()))?;
+                Ok(context_data)
             }
+            _ => Err(PayloadErrorKind::Missing),
         }
     }
 }
@@ -60,7 +91,7 @@ mod tests {
         let params = json!({"data": {"asset_keys": ["asset1", "asset2"], "run_id": "0123456", "extras": {"key": "value"}}});
         let params = params.as_object().expect("Invalid raw JSON provided");
         assert_eq!(
-            default_context_loader.load_context(params.clone()),
+            default_context_loader.load_context(params.clone()).unwrap(),
             PipesContextData {
                 asset_keys: Some(vec!["asset1".to_string(), "asset2".to_string()]),
                 run_id: "0123456".to_string(),
@@ -80,7 +111,7 @@ mod tests {
         let params = json!({"path": file.path()});
         let params = params.as_object().unwrap();
         assert_eq!(
-            default_context_loader.load_context(params.clone()),
+            default_context_loader.load_context(params.clone()).unwrap(),
             PipesContextData {
                 asset_keys: Some(vec!["asset1".to_string(), "asset2".to_string()]),
                 run_id: "0123456".to_string(),
@@ -99,7 +130,7 @@ mod tests {
         let params = json!({"data": {"asset_keys": ["asset_from_data"], "run_id": "id_from_data", "extras": {"key_from_data": "value_from_data"}}, "path": file.path()});
         let params = params.as_object().unwrap();
         assert_eq!(
-            default_context_loader.load_context(params.clone()),
+            default_context_loader.load_context(params.clone()).unwrap(),
             PipesContextData {
                 asset_keys: Some(vec!["asset_from_path".to_string()]),
                 run_id: "id_from_path".to_string(),

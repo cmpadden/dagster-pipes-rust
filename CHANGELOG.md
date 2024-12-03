@@ -4,6 +4,12 @@
 
 ### Added
 
+-
+
+## 0.1.6
+
+### Added
+
 - (pull/5) Setup `jsonschema` and `quicktype` to generate types shared with `dagster-pipes-java`
 - (pull/4) Added ability to report asset check via `context.report_asset_check`
 - (pull/4) Added `AssetCheckSeverity` `enum` for specifying check severity

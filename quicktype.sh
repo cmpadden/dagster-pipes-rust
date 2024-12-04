@@ -1,4 +1,4 @@
 #!bash
 
 printf -- '%s\0' jsonschema/pipes/*.schema.json | xargs -0 \
-    quicktype --visibility public -s schema -l rust --derive-debug -o src/types.rs 
+    quicktype -s schema -l rust --visibility public --derive-debug --derive-partial-eq -o src/types.rs

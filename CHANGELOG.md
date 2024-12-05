@@ -1,6 +1,8 @@
 # Changelog
 
 ## [UNRELEASED]
+- (pull/9) Handle errors for `ParamsLoader` and `ContextLoader` implementations
+
 
 ### Added
 

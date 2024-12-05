@@ -88,14 +88,41 @@ mod tests {
     #[test]
     fn test_load_context_from_data_dict() {
         let default_context_loader = DefaultLoader::new();
-        let params = json!({"data": {"asset_keys": ["asset1", "asset2"], "run_id": "0123456", "extras": {"key": "value"}}});
-        let params = params.as_object().expect("Invalid raw JSON provided");
+        let params: Map<String, Value> = serde_json::from_str(
+            r#"
+            {
+                "data": {
+                    "asset_keys": [
+                        "asset1",
+                        "asset2"
+                    ],
+                    "extras": {
+                        "key": "value"
+                    },
+                    "retry_number": 0,
+                    "run_id": "012345"
+                }
+            }
+            "#,
+        )
+        .expect("Invalid raw JSON provided");
+
         assert_eq!(
             default_context_loader.load_context(params.clone()).unwrap(),
             PipesContextData {
                 asset_keys: Some(vec!["asset1".to_string(), "asset2".to_string()]),
-                run_id: "0123456".to_string(),
-                extras: HashMap::from([("key".to_string(), Value::String("value".to_string()))])
+                code_version_by_asset_key: None,
+                extras: Some(HashMap::from([(
+                    "key".to_string(),
+                    Some(Value::String("value".to_string()))
+                )])),
+                job_name: None,
+                partition_key: None,
+                partition_key_range: None,
+                partition_time_window: None,
+                provenance_by_asset_key: None,
+                retry_number: 0,
+                run_id: "012345".to_string(),
             }
         );
     }
@@ -106,7 +133,23 @@ mod tests {
         //       Mock the implementation instead.
         let default_context_loader = DefaultLoader::new();
         let mut file = NamedTempFile::new().expect("Failed to create tempfile for testing");
-        file.write_all(r#"{"asset_keys": ["asset1", "asset2"], "run_id": "0123456", "extras": {"key": "value"}}"#.as_bytes()).expect("Failed to write data into tempfile");
+        file.write_all(
+            r#"
+                {
+                    "asset_keys": [
+                        "asset1",
+                        "asset2"
+                    ],
+                    "extras": {
+                        "key": "value"
+                    },
+                    "retry_number": 0,
+                    "run_id": "012345"
+                }
+                "#
+            .as_bytes(),
+        )
+        .expect("Failed to write data into tempfile");
 
         let params = json!({"path": file.path()});
         let params = params.as_object().unwrap();
@@ -114,8 +157,18 @@ mod tests {
             default_context_loader.load_context(params.clone()).unwrap(),
             PipesContextData {
                 asset_keys: Some(vec!["asset1".to_string(), "asset2".to_string()]),
-                run_id: "0123456".to_string(),
-                extras: HashMap::from([("key".to_string(), Value::String("value".to_string()))])
+                code_version_by_asset_key: None,
+                extras: Some(HashMap::from([(
+                    "key".to_string(),
+                    Some(Value::String("value".to_string()))
+                )])),
+                job_name: None,
+                partition_key: None,
+                partition_key_range: None,
+                partition_time_window: None,
+                provenance_by_asset_key: None,
+                retry_number: 0,
+                run_id: "012345".to_string(),
             }
         );
     }
@@ -125,7 +178,17 @@ mod tests {
     fn test_load_context_prioritizes_file_path_when_both_are_present() {
         let default_context_loader = DefaultLoader::new();
         let mut file = NamedTempFile::new().expect("Failed to create tempfile for testing");
-        file.write_all(r#"{"asset_keys": ["asset_from_path"], "run_id": "id_from_path", "extras": {"key_from_path": "value_from_path"}}"#.as_bytes()).expect("Failed to write data into tempfile");
+        file.write_all(
+            r#"
+            {
+                "asset_keys": ["asset_from_path"],
+                "run_id": "id_from_path",
+                "extras": {"key_from_path": "value_from_path"},
+                "retry_number": 0
+            }"#
+            .as_bytes(),
+        )
+        .expect("Failed to write data into tempfile");
 
         let params = json!({"data": {"asset_keys": ["asset_from_data"], "run_id": "id_from_data", "extras": {"key_from_data": "value_from_data"}}, "path": file.path()});
         let params = params.as_object().unwrap();
@@ -133,11 +196,18 @@ mod tests {
             default_context_loader.load_context(params.clone()).unwrap(),
             PipesContextData {
                 asset_keys: Some(vec!["asset_from_path".to_string()]),
-                run_id: "id_from_path".to_string(),
-                extras: HashMap::from([(
+                code_version_by_asset_key: None,
+                extras: Some(HashMap::from([(
                     "key_from_path".to_string(),
-                    Value::String("value_from_path".to_string())
-                )])
+                    Some(Value::String("value_from_path".to_string()))
+                )])),
+                job_name: None,
+                partition_key: None,
+                partition_key_range: None,
+                partition_time_window: None,
+                provenance_by_asset_key: None,
+                retry_number: 0,
+                run_id: "id_from_path".to_string(),
             }
         );
     }

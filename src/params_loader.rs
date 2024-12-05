@@ -12,9 +12,9 @@ const DAGSTER_PIPES_MESSAGES_ENV_VAR: &str = "DAGSTER_PIPES_MESSAGES";
 /// Load params passed from the orchestration process by the context injector and
 /// message reader. These params are used to respectively bootstrap the
 /// [`PipesContextLoader`] and [`PipesMessageWriter`].
-pub trait PipesParamsLoader {
+pub trait LoadParams {
     /// Whether or not this process has been provided with provided with information
-    /// to create a PipesContext or should instead return a mock.
+    /// to create a `PipesContext` or should instead return a mock.
     fn is_dagster_pipes_process(&self) -> bool;
     /// Load params passed by the orchestration-side context injector.
     fn load_context_params(&self) -> Result<Map<String, Value>, ParamsError>;
@@ -96,15 +96,15 @@ impl From<serde_json::Error> for ParamsErrorKind {
 }
 
 #[derive(Debug, Default)]
-pub struct PipesEnvVarParamsLoader;
+pub struct EnvVarLoader;
 
-impl PipesEnvVarParamsLoader {
+impl EnvVarLoader {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl PipesParamsLoader for PipesEnvVarParamsLoader {
+impl LoadParams for EnvVarLoader {
     fn is_dagster_pipes_process(&self) -> bool {
         std::env::var(DAGSTER_PIPES_CONTEXT_ENV_VAR).is_ok()
     }
@@ -140,7 +140,7 @@ impl PipesParamsLoader for PipesEnvVarParamsLoader {
 }
 
 // translation of
-// https://github.com/dagster-io/dagster/blob/258d9ca0db/python_modules/dagster-pipes/dagster_pipes/__init__.py#L354-L367
+// `<https://github.com/dagster-io/dagster/blob/258d9ca0db/python_modules/dagster-pipes/dagster_pipes/__init__.py#L354-L367>`
 fn decode_env_var<T>(param: &str) -> Result<T, ParamsErrorKind>
 where
     T: DeserializeOwned,

@@ -13,11 +13,11 @@ use serde_json::json;
 use serde_json::Value;
 use thiserror::Error;
 
-use crate::context_loader::PipesContextLoader;
-use crate::context_loader::PipesDefaultContextLoader;
-use crate::params_loader::PipesEnvVarParamsLoader;
-use crate::params_loader::PipesParamsLoader;
-use crate::types::{Method, PipesContextData, PipesMessage};
+use crate::context_loader::DefaultLoader as PipesDefaultContextLoader;
+pub use crate::context_loader::LoadContext;
+use crate::params_loader::EnvVarLoader as PipesEnvVarParamsLoader;
+pub use crate::params_loader::LoadParams;
+pub use crate::types::{Method, PipesContextData, PipesMessage};
 
 #[derive(Serialize)]
 #[serde(rename_all = "UPPERCASE")]
@@ -47,7 +47,7 @@ impl PipesContext {
             method: Method::ReportAssetMaterialization,
             params: Some(params),
         };
-        self.writer.write_message(msg);
+        self.writer.write_message(&msg);
     }
 
     pub fn report_asset_check(
@@ -55,7 +55,7 @@ impl PipesContext {
         check_name: &str,
         passed: bool,
         asset_key: &str,
-        severity: AssetCheckSeverity,
+        severity: &AssetCheckSeverity,
         metadata: serde_json::Value,
     ) {
         let params: HashMap<String, Option<serde_json::Value>> = HashMap::from([
@@ -71,7 +71,7 @@ impl PipesContext {
             method: Method::ReportAssetCheck,
             params: Some(params),
         };
-        self.writer.write_message(msg);
+        self.writer.write_message(&msg);
     }
 }
 
@@ -80,10 +80,10 @@ struct PipesFileMessageWriter {
     path: String,
 }
 impl PipesFileMessageWriter {
-    fn write_message(&mut self, message: PipesMessage) {
+    fn write_message(&mut self, message: &PipesMessage) {
         let serialized_msg = serde_json::to_string(&message).unwrap();
         let mut file = OpenOptions::new().append(true).open(&self.path).unwrap();
-        writeln!(file, "{}", serialized_msg).unwrap();
+        writeln!(file, "{serialized_msg}").unwrap();
 
         // TODO - optional `stderr` based writing
         //eprintln!("{}", serialized_msg);
@@ -110,6 +110,7 @@ pub enum DagsterPipesError {
 
 // partial translation of
 // https://github.com/dagster-io/dagster/blob/258d9ca0db/python_modules/dagster-pipes/dagster_pipes/__init__.py#L798-L838
+#[must_use]
 pub fn open_dagster_pipes() -> Result<PipesContext, DagsterPipesError> {
     let params_loader = PipesEnvVarParamsLoader::new();
     let context_loader = PipesDefaultContextLoader::new();

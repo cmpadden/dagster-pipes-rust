@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Deref};
+use std::collections::HashMap;
 
 use serde_json::{Map, Value};
 
@@ -119,14 +119,14 @@ impl MessageWriter for DefaultWriter {
                 // TODO: This is a simplified implementation. Utilize `PipesLogWriter`
                 Box::new(FileChannel::new(path.into()))
             }
-            (None, Some(Value::String(stream)), _) => match stream.to_lowercase().deref() {
+            (None, Some(Value::String(stream)), _) => match &*(stream.to_lowercase()) {
                 STDOUT => Box::new(StreamChannel::new(StdStream::Out)),
                 STDERR => Box::new(StreamChannel::new(StdStream::Err)),
                 _ => panic!("Invalid stream provided for stdio writer channel"),
             },
             (None, None, Some(Value::String(stream))) => {
                 // Once `PipesBufferedStreamMessageWriterChannel` is dropped, the buffered data is written
-                match stream.to_lowercase().deref() {
+                match &*(stream.to_lowercase()) {
                     STDOUT => Box::new(BufferedStreamChannel::new(StdStream::Out)),
                     STDERR => Box::new(BufferedStreamChannel::new(StdStream::Err)),
                     _ => panic!("Invalid stream provided for buffered stdio writer channel"),

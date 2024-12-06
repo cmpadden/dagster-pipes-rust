@@ -48,10 +48,10 @@ where
     pub fn new(
         context_data: PipesContextData,
         message_params: Map<String, Value>,
-        message_writer: W,
+        message_writer: &W,
     ) -> Self {
         let mut message_channel = message_writer.open(message_params);
-        let opened_payload = get_opened_payload(&message_writer);
+        let opened_payload = get_opened_payload(message_writer);
         let opened_message = PipesMessage {
             dagster_pipes_version: "0.1".to_string(), // TODO: Convert to `const`
             method: Method::Opened,
@@ -133,6 +133,6 @@ pub fn open_dagster_pipes() -> Result<PipesContext<PipesDefaultMessageWriter>, D
     Ok(PipesContext::new(
         context_data,
         message_params,
-        message_writer,
+        &message_writer,
     ))
 }

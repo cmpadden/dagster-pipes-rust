@@ -11,7 +11,7 @@ fn main() -> Result<(), DagsterPipesError> {
         "example_rust_subprocess_check",
         true,
         "example_rust_subprocess_asset",
-        AssetCheckSeverity::Warn,
+        &AssetCheckSeverity::Warn,
         json!({"quality": {"raw_value": 5, "type": "int"}}),
     );
     Ok(())

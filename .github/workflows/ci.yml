@@ -14,7 +14,6 @@ env:
 
 jobs:
   lint:
-    timeout-minutes: 10
     name: "lint"
     runs-on: ubuntu-latest
     steps:
@@ -25,3 +24,12 @@ jobs:
 
       - name: "rustfmt"
         run: cargo fmt --all --check
+
+  test:
+    name: "lint"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "cargo test"
+        run: cargo test

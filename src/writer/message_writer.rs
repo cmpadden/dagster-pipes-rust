@@ -90,18 +90,17 @@ impl Default for DefaultWriter {
     }
 }
 
-/// Implements `PipesMessageWriterChannel` to
-/// satisfy `PipesMessageWriter`'s associated types' trait bound
-pub struct BoxedChannel(Box<dyn MessageWriterChannel>);
-
-impl MessageWriterChannel for BoxedChannel {
+/// Extend `Box<dyn MessageWriterChannel>` to implement [`MessageWriterChannel`]
+/// to satisfy [`MessageWriter`]'s type constraints
+impl MessageWriterChannel for Box<dyn MessageWriterChannel> {
     fn write_message(&mut self, message: PipesMessage) {
-        self.0.write_message(message);
+        // Dereference twice to the inner field
+        (**self).write_message(message);
     }
 }
 
 impl MessageWriter for DefaultWriter {
-    type Channel = BoxedChannel;
+    type Channel = Box<dyn MessageWriterChannel>;
 
     fn open(&self, params: Map<String, Value>) -> Self::Channel {
         const FILE_PATH_KEY: &str = "path";
@@ -118,18 +117,18 @@ impl MessageWriter for DefaultWriter {
         ) {
             (Some(Value::String(path)), _, _) => {
                 // TODO: This is a simplified implementation. Utilize `PipesLogWriter`
-                BoxedChannel(Box::new(FileChannel::new(path.into())))
+                Box::new(FileChannel::new(path.into()))
             }
             (None, Some(Value::String(stream)), _) => match stream.to_lowercase().deref() {
-                STDOUT => BoxedChannel(Box::new(StreamChannel::new(StdStream::Out))),
-                STDERR => BoxedChannel(Box::new(StreamChannel::new(StdStream::Err))),
+                STDOUT => Box::new(StreamChannel::new(StdStream::Out)),
+                STDERR => Box::new(StreamChannel::new(StdStream::Err)),
                 _ => panic!("Invalid stream provided for stdio writer channel"),
             },
             (None, None, Some(Value::String(stream))) => {
                 // Once `PipesBufferedStreamMessageWriterChannel` is dropped, the buffered data is written
                 match stream.to_lowercase().deref() {
-                    STDOUT => BoxedChannel(Box::new(BufferedStreamChannel::new(StdStream::Out))),
-                    STDERR => BoxedChannel(Box::new(BufferedStreamChannel::new(StdStream::Err))),
+                    STDOUT => Box::new(BufferedStreamChannel::new(StdStream::Out)),
+                    STDERR => Box::new(BufferedStreamChannel::new(StdStream::Err)),
                     _ => panic!("Invalid stream provided for buffered stdio writer channel"),
                 }
             }

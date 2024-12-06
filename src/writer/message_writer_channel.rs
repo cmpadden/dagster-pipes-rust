@@ -4,7 +4,10 @@ use crate::types::PipesMessage;
 
 use super::StdStream;
 
+/// Write messages back to the Dagster orchestration process.
+/// To be used in conjunction with [`MessageWriter`](crate::MessageWriter).
 pub trait MessageWriterChannel {
+    /// Write a message to the orchestration process
     fn write_message(&mut self, message: PipesMessage);
 }
 
@@ -66,6 +69,8 @@ impl BufferedStreamChannel {
         }
     }
 
+    /// Flush messages in the buffer to the stream
+    /// <div class="warning">This class will called once on `Drop`</div>
     fn flush(&mut self) {
         let _: Vec<_> = self
             .buffer
@@ -88,7 +93,8 @@ impl BufferedStreamChannel {
 }
 
 impl Drop for BufferedStreamChannel {
-    /// Flushes the data when out of scope
+    /// Flush the data when out of scope or panicked.
+    /// <div class="warning">Panic aborting will prevent `Drop` and this function from running</div>
     fn drop(&mut self) {
         self.flush();
     }

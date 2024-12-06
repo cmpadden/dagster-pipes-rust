@@ -12,17 +12,49 @@ mod private {
     pub struct Token; // To seal certain trait methods
 }
 
+/// Write messages back to Dagster, via its associated [`Self::Channel`].
 pub trait MessageWriter {
     type Channel: MessageWriterChannel;
 
+    /// Initialize a channel for writing messages back to Dagster.
+    ///
+    /// This method should takes the params passed by the orchestration-side
+    /// `PipesMessageReader` and use them to construct and yield
+    /// [`MessageWriterChannel`].
     fn open(&self, params: Map<String, Value>) -> Self::Channel;
 
     /// Return a payload containing information about the external process to be passed back to
     /// the orchestration process. This should contain information that cannot be known before
     /// the external process is launched.
     ///
+    /// # Note
     /// This method is sealed — it should not be overridden by users.
-    /// Instead, users should override `get_opened_extras` to inject custom data.
+    /// Instead, users should override [`Self::get_opened_extras`] to inject custom data.
+    ///
+    /// ```compile_fail
+    /// # use serde_json::{Map, Value};
+    /// # use dagster_pipes_rust::{MessageWriter, MessageWriterChannel, PipesMessage};
+    /// #
+    /// struct MyMessageWriter(u64);
+    /// #
+    /// # struct MyChannel;
+    /// # impl MessageWriterChannel for MyChannel {
+    /// #    fn write_message(&mut self, message: PipesMessage) {
+    /// #        todo!()
+    /// #    }
+    /// # };
+    ///
+    /// impl MessageWriter for MyMessageWriter {
+    /// #    type Channel = MyChannel;
+    /// #
+    /// #    fn open(&self, params: Map<String, Value>) -> Self::Channel {
+    ///      // ...
+    /// #          todo!()
+    /// #    }
+    /// }
+    ///
+    /// MyMessageWriter(42).get_opened_payload(private::Token); // use of undeclared crate or module `private`
+    /// ```
     fn get_opened_payload(&self, _: private::Token) -> HashMap<String, Option<Value>> {
         let mut extras = HashMap::new();
         extras.insert(
@@ -32,6 +64,8 @@ pub trait MessageWriter {
         extras
     }
 
+    /// Return arbitary reader-specific information to be passed back to the orchestration
+    /// process. The information will be returned under the `extras` key of the initialization payload.
     fn get_opened_extras(&self) -> Map<String, Value> {
         Map::new()
     }

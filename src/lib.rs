@@ -105,12 +105,6 @@ where
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct PipesMessagesParams {
-    path: Option<String>,  // write to file
-    stdio: Option<String>, // stderr | stdout (unsupported)
-}
-
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum DagsterPipesError {

@@ -97,33 +97,15 @@ struct PipesMessagesParams {
 }
 
 #[derive(Debug, Error)]
-#[error("dagster pipes failure:\n{0}")]
 #[non_exhaustive]
-pub struct DagsterPipesError(#[from] pub DagsterPipesErrorKind);
-
-#[derive(Debug, Error)]
-#[error(transparent)]
-#[non_exhaustive]
-pub enum DagsterPipesErrorKind {
-    #[error("failed to load params:\n{0}")]
+pub enum DagsterPipesError {
+    #[error("dagster pipes failed to load params: {0}")]
     #[non_exhaustive]
     ParamsLoader(#[from] ParamsError),
 
-    #[error("failed to load context:\n{0}")]
+    #[error("dagster pipes failed to load context: {0}")]
     #[non_exhaustive]
     ContextLoader(#[from] PayloadErrorKind),
-}
-
-impl From<ParamsError> for DagsterPipesError {
-    fn from(value: ParamsError) -> Self {
-        DagsterPipesError(DagsterPipesErrorKind::ParamsLoader(value))
-    }
-}
-
-impl From<PayloadErrorKind> for DagsterPipesError {
-    fn from(value: PayloadErrorKind) -> Self {
-        DagsterPipesError(DagsterPipesErrorKind::ContextLoader(value))
-    }
 }
 
 // partial translation of
@@ -135,14 +117,12 @@ pub fn open_dagster_pipes() -> Result<PipesContext, DagsterPipesError> {
     let context_params = params_loader.load_context_params()?;
     let context_data = context_loader.load_context(context_params)?;
 
-
     let message_params = params_loader.load_message_params()?;
     // TODO: Refactor into MessageWriter impl
     let path = match &message_params["path"] {
         Value::String(string) => string.clone(),
         _ => panic!("Expected message \"path\" in bootstrap payload"),
     };
-
 
     //if stdio != "stderr" {
     //    panic!("only stderr supported for dagster pipes messages")

@@ -105,3 +105,27 @@ impl MessageWriterChannel for BufferedStreamChannel {
         self.buffer.push(message);
     }
 }
+
+#[cfg(test)]
+mod tests_file_channel {
+    use tempfile::NamedTempFile;
+
+    use crate::{Method, PipesMessage};
+
+    use super::{FileChannel, MessageWriterChannel};
+
+    #[test]
+    fn test_write_message() {
+        let file = NamedTempFile::new().expect("Failed to create tempfile for testing");
+        let mut channel = FileChannel::new(file.path().into());
+        let message = PipesMessage::new(Method::Opened, None);
+        channel.write_message(message.clone());
+
+        let file_content =
+            std::fs::read_to_string(file.path()).expect("Failed to read from tempfile");
+        assert_eq!(
+            message,
+            serde_json::from_str(&file_content).expect("Failed to serialize PipesMessage")
+        )
+    }
+}

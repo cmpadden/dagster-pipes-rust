@@ -1,6 +1,7 @@
 mod context_loader;
 mod params_loader;
 mod types;
+mod types_ext;
 mod writer;
 
 use std::collections::HashMap;
@@ -72,11 +73,7 @@ where
             ("data_version".to_string(), None), // TODO - support data versions
         ]);
 
-        let msg = PipesMessage {
-            dagster_pipes_version: "0.1".to_string(),
-            method: Method::ReportAssetMaterialization,
-            params: Some(params),
-        };
+        let msg = PipesMessage::new(Method::ReportAssetMaterialization, Some(params));
         self.message_channel.write_message(msg);
     }
 
@@ -96,11 +93,7 @@ where
             ("metadata".to_string(), Some(metadata)),
         ]);
 
-        let msg = PipesMessage {
-            dagster_pipes_version: "0.1".to_string(),
-            method: Method::ReportAssetCheck,
-            params: Some(params),
-        };
+        let msg = PipesMessage::new(Method::ReportAssetCheck, Some(params));
         self.message_channel.write_message(msg);
     }
 }

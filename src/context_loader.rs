@@ -111,18 +111,12 @@ mod tests {
             default_context_loader.load_context(params.clone()).unwrap(),
             PipesContextData {
                 asset_keys: Some(vec!["asset1".to_string(), "asset2".to_string()]),
-                code_version_by_asset_key: None,
                 extras: Some(HashMap::from([(
                     "key".to_string(),
                     Some(Value::String("value".to_string()))
                 )])),
-                job_name: None,
-                partition_key: None,
-                partition_key_range: None,
-                partition_time_window: None,
-                provenance_by_asset_key: None,
-                retry_number: 0,
                 run_id: "012345".to_string(),
+                ..PipesContextData::default()
             }
         );
     }
@@ -157,18 +151,12 @@ mod tests {
             default_context_loader.load_context(params.clone()).unwrap(),
             PipesContextData {
                 asset_keys: Some(vec!["asset1".to_string(), "asset2".to_string()]),
-                code_version_by_asset_key: None,
                 extras: Some(HashMap::from([(
                     "key".to_string(),
                     Some(Value::String("value".to_string()))
                 )])),
-                job_name: None,
-                partition_key: None,
-                partition_key_range: None,
-                partition_time_window: None,
-                provenance_by_asset_key: None,
-                retry_number: 0,
                 run_id: "012345".to_string(),
+                ..PipesContextData::default()
             }
         );
     }
@@ -182,9 +170,9 @@ mod tests {
             r#"
             {
                 "asset_keys": ["asset_from_path"],
-                "run_id": "id_from_path",
                 "extras": {"key_from_path": "value_from_path"},
-                "retry_number": 0
+                "retry_number": 0,
+                "run_id": "id_from_path"
             }"#
             .as_bytes(),
         )
@@ -196,18 +184,12 @@ mod tests {
             default_context_loader.load_context(params.clone()).unwrap(),
             PipesContextData {
                 asset_keys: Some(vec!["asset_from_path".to_string()]),
-                code_version_by_asset_key: None,
                 extras: Some(HashMap::from([(
                     "key_from_path".to_string(),
                     Some(Value::String("value_from_path".to_string()))
                 )])),
-                job_name: None,
-                partition_key: None,
-                partition_key_range: None,
-                partition_time_window: None,
-                provenance_by_asset_key: None,
-                retry_number: 0,
                 run_id: "id_from_path".to_string(),
+                ..PipesContextData::default()
             }
         );
     }

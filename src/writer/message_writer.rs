@@ -98,7 +98,7 @@ impl MessageWriter for DefaultWriter {
         const BUFFERED_STDIO_KEY: &str = "buffered_stdio";
         const STDERR: &str = "stderr";
         const STDOUT: &str = "stdout";
-        const INCLUDE_STDIO_IN_MESSAGES_KEY: &str = "include_stdio_in_messages";
+        //const INCLUDE_STDIO_IN_MESSAGES_KEY: &str = "include_stdio_in_messages";
 
         match (
             params.get(FILE_PATH_KEY),

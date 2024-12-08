@@ -1,18 +1,33 @@
+use dagster_pipes_rust::types::{PipesMetadataValue, RawValue, Type};
 use dagster_pipes_rust::{open_dagster_pipes, AssetCheckSeverity, DagsterPipesError};
-use serde_json::json;
+
+use std::collections::HashMap;
 
 fn main() -> Result<(), DagsterPipesError> {
     let mut context = open_dagster_pipes()?;
-    // See supported metadata types here:
-    // https://github.com/dagster-io/dagster/blob/master/python_modules/dagster/dagster/_core/pipes/context.py#L133
-    let metadata = json!({"row_count": {"raw_value": 100, "type": "int"}});
-    context.report_asset_materialization("example_rust_subprocess_asset", metadata);
+
+    let asset_metadata = HashMap::from([(
+        "row_count".to_string(),
+        PipesMetadataValue {
+            raw_value: Some(RawValue::Integer(100)),
+            pipes_metadata_value_type: Some(Type::Int),
+        },
+    )]);
+    context.report_asset_materialization("example_rust_subprocess_asset", asset_metadata);
+
+    let check_metadata = HashMap::from([(
+        "quality".to_string(),
+        PipesMetadataValue {
+            raw_value: Some(RawValue::Integer(100)),
+            pipes_metadata_value_type: Some(Type::Int),
+        },
+    )]);
     context.report_asset_check(
         "example_rust_subprocess_check",
         true,
         "example_rust_subprocess_asset",
         &AssetCheckSeverity::Warn,
-        json!({"quality": {"raw_value": 5, "type": "int"}}),
+        check_metadata,
     );
     Ok(())
 }

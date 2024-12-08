@@ -99,6 +99,7 @@ mod tests {
                     "extras": {
                         "key": "value"
                     },
+                    "retry_number": 0,
                     "run_id": "012345"
                 }
             }
@@ -136,6 +137,7 @@ mod tests {
                     "extras": {
                         "key": "value"
                     },
+                    "retry_number": 0,
                     "run_id": "012345"
                 }
                 "#
@@ -168,8 +170,9 @@ mod tests {
             r#"
             {
                 "asset_keys": ["asset_from_path"],
-                "run_id": "id_from_path",
                 "extras": {"key_from_path": "value_from_path"},
+                "retry_number": 0,
+                "run_id": "id_from_path"
             }"#
             .as_bytes(),
         )

@@ -35,5 +35,8 @@ jobs:
         with:
           tool: nextest
 
-      - name: "cargo test"
+      - name: "Tests"
         run: cargo nextest run
+
+      - name: "Doctests"
+        run: cargo test --doc

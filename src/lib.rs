@@ -26,6 +26,15 @@ pub enum AssetCheckSeverity {
     Error,
 }
 
+impl PipesMetadataValue {
+    pub fn new(raw_value: types::RawValue, pipes_metadata_value_type: types::Type) -> Self {
+        Self {
+            raw_value: Some(raw_value),
+            pipes_metadata_value_type: Some(pipes_metadata_value_type),
+        }
+    }
+}
+
 // partial translation of
 // https://github.com/dagster-io/dagster/blob/258d9ca0db/python_modules/dagster-pipes/dagster_pipes/__init__.py#L859-L871
 #[derive(Debug)]
@@ -156,108 +165,95 @@ mod tests {
         let asset_metadata = HashMap::from([
             (
                 "text".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::String("hello".to_string())),
-                    pipes_metadata_value_type: Some(types::Type::Text),
-                },
+                PipesMetadataValue::new(
+                    types::RawValue::String("hello".to_string()),
+                    types::Type::Text,
+                ),
             ),
             (
                 "url".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::String("http://someurl.com".to_string())),
-                    pipes_metadata_value_type: Some(types::Type::Url),
-                },
+                PipesMetadataValue::new(
+                    types::RawValue::String("http://someurl.com".to_string()),
+                    types::Type::Url,
+                ),
             ),
             (
                 "path".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::String("file://some/path".to_string())),
-                    pipes_metadata_value_type: Some(types::Type::Path),
-                },
+                PipesMetadataValue::new(
+                    types::RawValue::String("file://some/path".to_string()),
+                    types::Type::Path,
+                ),
             ),
             (
                 "notebook".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::String("notebook".to_string())),
-                    pipes_metadata_value_type: Some(types::Type::Notebook),
-                },
+                PipesMetadataValue::new(
+                    types::RawValue::String("notebook".to_string()),
+                    types::Type::Notebook,
+                ),
             ),
             (
                 "json_object".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::AnythingMap(HashMap::from([(
+                PipesMetadataValue::new(
+                    types::RawValue::AnythingMap(HashMap::from([(
                         "key".to_string(),
                         Some(json!("value")),
-                    )]))),
-                    pipes_metadata_value_type: Some(types::Type::Json),
-                },
+                    )])),
+                    types::Type::Json,
+                ),
             ),
             (
                 "json_array".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::AnythingArray(vec![Some(
-                        json!({"key": "value"}),
-                    )])),
-                    pipes_metadata_value_type: Some(types::Type::Json),
-                },
+                PipesMetadataValue::new(
+                    types::RawValue::AnythingArray(vec![Some(json!({"key": "value"}))]),
+                    types::Type::Json,
+                ),
             ),
             (
                 "md".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::String("## markdown".to_string())),
-                    pipes_metadata_value_type: Some(types::Type::Md),
-                },
+                PipesMetadataValue::new(
+                    types::RawValue::String("## markdown".to_string()),
+                    types::Type::Md,
+                ),
             ),
             (
                 "dagster_run".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::String("1234".to_string())),
-                    pipes_metadata_value_type: Some(types::Type::DagsterRun),
-                },
+                PipesMetadataValue::new(
+                    types::RawValue::String("1234".to_string()),
+                    types::Type::DagsterRun,
+                ),
             ),
             (
                 "asset".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::String("some_asset".to_string())),
-                    pipes_metadata_value_type: Some(types::Type::Asset),
-                },
+                PipesMetadataValue::new(
+                    types::RawValue::String("some_asset".to_string()),
+                    types::Type::Asset,
+                ),
             ),
             (
                 "job".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::String("some_job".to_string())),
-                    pipes_metadata_value_type: Some(types::Type::Job),
-                },
+                PipesMetadataValue::new(
+                    types::RawValue::String("some_job".to_string()),
+                    types::Type::Job,
+                ),
             ),
             (
                 "timestamp".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::String(
-                        "2012-04-23T18:25:43.511Z".to_string(),
-                    )),
-                    pipes_metadata_value_type: Some(types::Type::Timestamp),
-                },
+                PipesMetadataValue::new(
+                    types::RawValue::String("2012-04-23T18:25:43.511Z".to_string()),
+                    types::Type::Timestamp,
+                ),
             ),
             (
                 "int".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::Integer(100)),
-                    pipes_metadata_value_type: Some(types::Type::Int),
-                },
+                PipesMetadataValue::new(types::RawValue::Integer(100), types::Type::Int),
             ),
             (
                 "float".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::Double(100.0)),
-                    pipes_metadata_value_type: Some(types::Type::Float),
-                },
+                PipesMetadataValue::new(types::RawValue::Double(100.0), types::Type::Float),
             ),
             (
                 "bool".to_string(),
-                PipesMetadataValue {
-                    raw_value: Some(types::RawValue::Bool(true)),
-                    pipes_metadata_value_type: Some(types::Type::Bool),
-                },
+                PipesMetadataValue::new(types::RawValue::Bool(true), types::Type::Bool),
             ),
             (
                 "none".to_string(),

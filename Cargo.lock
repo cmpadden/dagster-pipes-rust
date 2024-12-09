@@ -131,6 +131,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust_processing_jobs"
+version = "0.1.0"
+dependencies = [
+ "dagster_pipes_rust",
+ "serde_json",
+]
+
+[[package]]
 name = "rustix"
 version = "0.38.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"

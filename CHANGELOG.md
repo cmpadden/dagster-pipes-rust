@@ -8,6 +8,7 @@
 - (pull/14) Renamed `ParamsLoader` and `ContextLoader` traits to `LoadParams` and `LoadContext` respectively
 - (pull/14) Fixed failing unit tests in `context_loader.rs`
 - (pull/25) Use `cargo nextest` for GitHub CI jobs
+- (pull/26) Adds the use of `PipesMetadataValue` when logging asset/check materializations
 
 ## 0.1.6
 

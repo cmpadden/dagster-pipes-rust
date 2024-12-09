@@ -199,5 +199,7 @@ pub enum RawValue {
 
     Double(f64),
 
+    Integer(i64),
+
     String(String),
 }

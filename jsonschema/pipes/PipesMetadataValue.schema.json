@@ -22,21 +22,17 @@
       ]
     },
     "raw_value": {
-      "anyOf": [
-        { "type": "integer" },
-        { "type": "number" },
-        { "type": "string" },
-        {
-          "type": "object",
-          "additionalProperties": true
-        },
-        {
-          "type": "array",
-          "items": {}
-        },
-        { "type": "boolean" },
-        { "type": "null" }
-      ]
+      "type": [
+        "integer",
+        "number",
+        "string",
+        "object",
+        "array",
+        "boolean",
+        "null"
+      ],
+      "additionalProperties": true,
+      "items": {}
     }
   }
 }

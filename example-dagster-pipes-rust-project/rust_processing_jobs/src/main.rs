@@ -8,10 +8,7 @@ fn main() -> Result<(), DagsterPipesError> {
 
     let asset_metadata = HashMap::from([(
         "row_count".to_string(),
-        PipesMetadataValue {
-            raw_value: Some(RawValue::Integer(100)),
-            pipes_metadata_value_type: Some(Type::Int),
-        },
+        PipesMetadataValue::new(RawValue::Integer(100), Type::Int),
     )]);
     context.report_asset_materialization("example_rust_subprocess_asset", asset_metadata);
 

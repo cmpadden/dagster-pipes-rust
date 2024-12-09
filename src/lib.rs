@@ -33,6 +33,15 @@ pub enum AssetCheckSeverity {
     Error,
 }
 
+impl PipesMetadataValue {
+    pub fn new(raw_value: types::RawValue, pipes_metadata_value_type: types::Type) -> Self {
+        Self {
+            raw_value: Some(raw_value),
+            pipes_metadata_value_type: Some(pipes_metadata_value_type),
+        }
+    }
+}
+
 // partial translation of
 // https://github.com/dagster-io/dagster/blob/258d9ca0db/python_modules/dagster-pipes/dagster_pipes/__init__.py#L859-L871
 #[derive(Debug)]

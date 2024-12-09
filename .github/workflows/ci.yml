@@ -54,6 +54,10 @@ jobs:
         working-directory: example-dagster-pipes-rust-project
         run: uv python install
 
+      - name: "Install the project"
+        working-directory: example-dagster-pipes-rust-project
+        run: uv sync --all-extras --dev
+
       - name: "Lint"
         working-directory: example-dagster-pipes-rust-project
         run: uv run make ruff 

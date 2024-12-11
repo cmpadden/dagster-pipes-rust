@@ -31,5 +31,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: "cargo test"
-        run: cargo test
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
+
+      - name: "Tests"
+        run: cargo nextest run
+
+      - name: "Doctests"
+        run: cargo test --doc

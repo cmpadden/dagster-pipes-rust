@@ -11,6 +11,7 @@ pub trait MessageWriterChannel {
     fn write_message(&mut self, message: PipesMessage);
 }
 
+#[derive(Debug, PartialEq)]
 pub struct FileChannel {
     path: OsString,
 }
@@ -29,6 +30,7 @@ impl MessageWriterChannel for FileChannel {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct StreamChannel {
     stream: StdStream,
 }
@@ -56,6 +58,7 @@ impl MessageWriterChannel for StreamChannel {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct BufferedStreamChannel {
     buffer: Vec<PipesMessage>,
     stream: StdStream,
@@ -106,6 +109,24 @@ impl MessageWriterChannel for BufferedStreamChannel {
     }
 }
 
+#[derive(Debug, PartialEq)]
+#[non_exhaustive]
+pub enum DefaultChannel {
+    File(FileChannel),
+    Stream(StreamChannel),
+    BufferedStream(BufferedStreamChannel),
+}
+
+impl MessageWriterChannel for DefaultChannel {
+    fn write_message(&mut self, message: PipesMessage) {
+        match self {
+            Self::File(channel) => channel.write_message(message),
+            Self::Stream(channel) => channel.write_message(message),
+            Self::BufferedStream(channel) => channel.write_message(message),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests_file_channel {
     use tempfile::NamedTempFile;
@@ -126,6 +147,6 @@ mod tests_file_channel {
         assert_eq!(
             message,
             serde_json::from_str(&file_content).expect("Failed to serialize PipesMessage")
-        )
+        );
     }
 }

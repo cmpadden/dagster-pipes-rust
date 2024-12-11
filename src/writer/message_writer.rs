@@ -2,9 +2,8 @@ use std::collections::HashMap;
 
 use serde_json::{Map, Value};
 
-use crate::types::PipesMessage;
 use crate::writer::message_writer_channel::{
-    BufferedStreamChannel, FileChannel, MessageWriterChannel, StreamChannel,
+    BufferedStreamChannel, DefaultChannel, FileChannel, MessageWriterChannel, StreamChannel,
 };
 use crate::writer::StdStream;
 
@@ -90,17 +89,8 @@ impl Default for DefaultWriter {
     }
 }
 
-/// Extend `Box<dyn MessageWriterChannel>` to implement [`MessageWriterChannel`]
-/// to satisfy [`MessageWriter`]'s type constraints
-impl MessageWriterChannel for Box<dyn MessageWriterChannel> {
-    fn write_message(&mut self, message: PipesMessage) {
-        // Dereference twice to the inner field
-        (**self).write_message(message);
-    }
-}
-
 impl MessageWriter for DefaultWriter {
-    type Channel = Box<dyn MessageWriterChannel>;
+    type Channel = DefaultChannel;
 
     fn open(&self, params: Map<String, Value>) -> Self::Channel {
         const FILE_PATH_KEY: &str = "path";
@@ -117,22 +107,102 @@ impl MessageWriter for DefaultWriter {
         ) {
             (Some(Value::String(path)), _, _) => {
                 // TODO: This is a simplified implementation. Utilize `PipesLogWriter`
-                Box::new(FileChannel::new(path.into()))
+                DefaultChannel::File(FileChannel::new(path.into()))
             }
             (None, Some(Value::String(stream)), _) => match &*(stream.to_lowercase()) {
-                STDOUT => Box::new(StreamChannel::new(StdStream::Out)),
-                STDERR => Box::new(StreamChannel::new(StdStream::Err)),
+                STDOUT => DefaultChannel::Stream(StreamChannel::new(StdStream::Out)),
+                STDERR => DefaultChannel::Stream(StreamChannel::new(StdStream::Err)),
                 _ => panic!("Invalid stream provided for stdio writer channel"),
             },
             (None, None, Some(Value::String(stream))) => {
                 // Once `PipesBufferedStreamMessageWriterChannel` is dropped, the buffered data is written
                 match &*(stream.to_lowercase()) {
-                    STDOUT => Box::new(BufferedStreamChannel::new(StdStream::Out)),
-                    STDERR => Box::new(BufferedStreamChannel::new(StdStream::Err)),
+                    STDOUT => {
+                        DefaultChannel::BufferedStream(BufferedStreamChannel::new(StdStream::Out))
+                    }
+                    STDERR => {
+                        DefaultChannel::BufferedStream(BufferedStreamChannel::new(StdStream::Err))
+                    }
                     _ => panic!("Invalid stream provided for buffered stdio writer channel"),
                 }
             }
             _ => panic!("No way to write messages"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rstest::rstest;
+    use serde_json::json;
+
+    use super::*;
+    use crate::writer::message_writer_channel::{
+        BufferedStreamChannel, FileChannel, StreamChannel,
+    };
+
+    #[test]
+    fn test_open_with_file_path_key() {
+        let writer = DefaultWriter;
+        let params = serde_json::from_str(r#"{"path": "my-file-path"}"#)
+            .expect("Failed to parse raw JSON string");
+        assert_eq!(
+            writer.open(params),
+            DefaultChannel::File(FileChannel::new("my-file-path".into()))
+        );
+    }
+
+    #[rstest]
+    #[case("stdout", StdStream::Out)]
+    #[case("stderr", StdStream::Err)]
+    fn test_open_with_stdio_key(#[case] value: &str, #[case] stream: StdStream) {
+        let writer = DefaultWriter;
+        let Value::Object(params) = json!({"stdio": value}) else {
+            panic!("Unexpected JSON type encountered")
+        };
+        assert_eq!(
+            writer.open(params),
+            DefaultChannel::Stream(StreamChannel::new(stream))
+        );
+    }
+
+    #[rstest]
+    #[case("stdout", StdStream::Out)]
+    #[case("stderr", StdStream::Err)]
+    fn test_open_with_buffered_stdio_key(#[case] value: &str, #[case] stream: StdStream) {
+        let writer = DefaultWriter;
+        let Value::Object(params) = json!({"buffered_stdio": value}) else {
+            panic!("Unexpected JSON type encountered")
+        };
+        assert_eq!(
+            writer.open(params),
+            DefaultChannel::BufferedStream(BufferedStreamChannel::new(stream))
+        );
+    }
+
+    #[test]
+    fn test_open_prioritizes_file_path_over_everything_else() {
+        let writer = DefaultWriter;
+        let Value::Object(params) =
+            json!({"path": "my-file-path", "stdio": "stdout", "buffered_stdio": "stderr"})
+        else {
+            panic!("Unexpected JSON type encountered")
+        };
+        assert_eq!(
+            writer.open(params),
+            DefaultChannel::File(FileChannel::new("my-file-path".into()))
+        );
+    }
+
+    #[test]
+    fn test_open_prioritizes_stream_over_buffered_stream() {
+        let writer = DefaultWriter;
+        let Value::Object(params) = json!({"stdio": "stdout", "buffered_stdio": "stderr"}) else {
+            panic!("Unexpected JSON type encountered")
+        };
+        assert_eq!(
+            writer.open(params),
+            DefaultChannel::Stream(StreamChannel::new(StdStream::Out))
+        );
     }
 }

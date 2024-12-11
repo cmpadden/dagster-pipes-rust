@@ -4,7 +4,7 @@ pub mod message_writer_channel;
 use serde::Serialize;
 
 // TODO: Might need to rename since `In` is not supported
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum StdStream {
     #[serde(rename = "stdout")]
     Out,

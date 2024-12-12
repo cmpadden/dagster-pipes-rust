@@ -53,15 +53,6 @@ where
     message_channel: W::Channel,
 }
 
-impl PipesMetadataValue {
-    pub fn new(raw_value: types::RawValue, pipes_metadata_value_type: types::Type) -> Self {
-        Self {
-            raw_value: Some(raw_value),
-            pipes_metadata_value_type: Some(pipes_metadata_value_type),
-        }
-    }
-}
-
 impl<W> PipesContext<W>
 where
     W: MessageWriter,

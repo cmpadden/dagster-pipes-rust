@@ -1,5 +1,7 @@
-> [!WARNING]
-> This project is under active development and is subject to change!
+> [!NOTE]
+> This project has been moved to the official Dagster `community-integrations` repo. The maintained version can be found [here](https://github.com/dagster-io/community-integrations/tree/c7238204fcd539532d67abb3b8dda3bf30a24c07/libraries/pipes/implementations/rust).
+
+---
 
 # dagster-pipes-rust
 

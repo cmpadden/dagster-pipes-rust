@@ -4,7 +4,6 @@ mod types;
 mod types_ext;
 mod writer;
 
-
 use std::collections::HashMap;
 
 use serde::Serialize;

@@ -16,7 +16,7 @@ use std::collections::HashMap;
 
 /// The serializable data passed from the orchestration process to the external process. This
 /// gets wrapped in a PipesContext.
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PipesContextData {
     pub asset_keys: Option<Vec<String>>,
 
@@ -39,21 +39,21 @@ pub struct PipesContextData {
     pub run_id: String,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PartitionKeyRange {
     pub end: Option<String>,
 
     pub start: Option<String>,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PartitionTimeWindow {
     pub end: Option<String>,
 
     pub start: Option<String>,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProvenanceByAssetKey {
     pub code_version: Option<String>,
 
@@ -62,7 +62,7 @@ pub struct ProvenanceByAssetKey {
     pub is_user_provided: Option<bool>,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PipesException {
     /// exception that explicitly led to this exception
     pub cause: Box<Option<PipesExceptionClass>>,
@@ -79,7 +79,7 @@ pub struct PipesException {
 }
 
 /// exception that being handled when this exception was raised
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ContextClass {
     /// exception that explicitly led to this exception
     pub cause: Box<Option<PipesExceptionClass>>,
@@ -95,7 +95,7 @@ pub struct ContextClass {
     pub stack: Option<Vec<String>>,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PipesExceptionClass {
     /// exception that explicitly led to this exception
     pub cause: Box<Option<PipesExceptionClass>>,
@@ -111,7 +111,7 @@ pub struct PipesExceptionClass {
     pub stack: Option<Vec<String>>,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PipesMessage {
     /// The version of the Dagster Pipes protocol
     #[serde(rename = "__dagster_pipes_version")]
@@ -125,7 +125,7 @@ pub struct PipesMessage {
 }
 
 /// Event type
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Method {
     Closed,
@@ -144,7 +144,7 @@ pub enum Method {
     ReportCustomMessage,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PipesMetadataValue {
     pub raw_value: Option<RawValue>,
 
@@ -152,7 +152,7 @@ pub struct PipesMetadataValue {
     pub pipes_metadata_value_type: Option<Type>,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Type {
     Asset,
@@ -188,7 +188,7 @@ pub enum Type {
     Url,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum RawValue {
     AnythingArray(Vec<Option<serde_json::Value>>),

@@ -1,13 +1,9 @@
-target/
-
-# env
-.direnv/
-.envrc
-
-# python
-__pycache__/
-*.py[cod]
 *$py.class
 *.egg-info/
-
+*.py[cod]
+.direnv/
+.envrc
 .vscode
+Cargo.lock
+__pycache__/
+target/
